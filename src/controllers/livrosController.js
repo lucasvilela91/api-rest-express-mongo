@@ -1,6 +1,5 @@
 import NaoEncontrado from '../erros/NaoEncontrado.js';
-import {livros} from '../models/index.js';
-
+import { livros } from '../models/index.js';
 
 class LivrosController {
   static listarLivros = async (req, res, next) => {
@@ -82,17 +81,33 @@ class LivrosController {
     }
   };
 
-  static listarLivroPorEditora = async (req, res, next) => {
+  static listarLivroPorFiltro = async (req, res, next) => {
     try {
-      const editora = req.query.editora;
+      const busca = processaBusca(req.query);
 
-      const livrosResultado = await livros.find({ editora: editora });
+      const livrosResultado = await livros.find(busca);
 
       res.status(200).send(livrosResultado);
     } catch (erro) {
       next(erro);
     }
   };
+}
+
+function processaBusca(parametros) {
+  const { editora, titulo, minPaginas, maxPaginas } = parametros;
+
+  const busca = {};
+
+  if (editora) busca.editora = { $regex: editora, $options: 'i' };
+  if (titulo) busca.titulo = { $regex: titulo, $options: 'i' };
+
+  if (minPaginas || maxPaginas) busca.numeroPaginas = {};
+
+  if (minPaginas) busca.numeroPaginas.$gte = Number(minPaginas);
+  if (maxPaginas) busca.numeroPaginas.$lte = Number(maxPaginas);
+
+  return busca;
 }
 
 export default LivrosController;
